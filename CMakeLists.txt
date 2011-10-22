@@ -1,0 +1,172 @@
+
+ # ***** BEGIN LICENSE BLOCK *****
+ # Version: MPL 1.1/GPL 2.0/LGPL 2.1
+ #
+ # The contents of this file are subject to the Mozilla Public License Version
+ # 1.1 (the "License"); you may not use this file except in compliance with
+ # the License. You may obtain a copy of the License at
+ # http://www.mozilla.org/MPL/
+ #
+ # Software distributed under the License is distributed on an "AS IS" basis,
+ # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ # for the specific language governing rights and limitations under the
+ # License.
+ #
+ # The Original Code is cmgui
+ #
+ # The Initial Developer of the Original Code is
+ # Auckland Uniservices Ltd, Auckland, New Zealand.
+ # Portions created by the Initial Developer are Copyright (C) 2005
+ # the Initial Developer. All Rights Reserved.
+ #
+ # Contributor(s): 
+ #
+ # Alternatively, the contents of this file may be used under the terms of
+ # either the GNU General Public License Version 2 or later (the "GPL"), or
+ # the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+ # in which case the provisions of the GPL or the LGPL are applicable instead
+ # of those above. If you wish to allow use of your version of this file only
+ # under the terms of either the GPL or the LGPL, and not to allow others to
+ # use your version of this file under the terms of the MPL, indicate your
+ # decision by deleting the provisions above and replace them with the notice
+ # and other provisions required by the GPL or the LGPL. If you do not delete
+ # the provisions above, a recipient may use your version of this file under
+ # the terms of any one of the MPL, the GPL or the LGPL.
+ #
+ # ***** END LICENSE BLOCK ***** */
+
+# Set the minimum version of cmake required to 2.6
+CMAKE_MINIMUM_REQUIRED( VERSION 2.6 )
+
+PROJECT( BZIP_2 )
+
+SET( BZIP2_MAJOR 1 )
+SET( BZIP2_MINOR 0 )
+SET( BZIP2_PATCH 5 )
+SET( BZIP2_VERSION ${BZIP2_MAJOR}.${BZIP2_MINOR}.${BZIP2_PATCH} )
+
+SET( LIBRARY_TARGET_NAME bzip2 )
+STRING( TOUPPER ${LIBRARY_TARGET_NAME} UPPERCASE_LIBRARY_TARGET_NAME )
+SET( BZIP2_TARGET_NAME bzip2app )
+SET( RECOVER_TARGET_NAME bzip2recover )
+
+MACRO( OPTION_WITH_DEFAULT OPTION_NAME OPTION_STRING OPTION_DEFAULT )
+	IF( NOT DEFINED ${OPTION_NAME} )
+		SET( ${OPTION_NAME} ${OPTION_DEFAULT} )
+	ENDIF( NOT DEFINED ${OPTION_NAME} )
+
+	OPTION( ${OPTION_NAME} "${OPTION_STRING}" ${${OPTION_NAME}} )
+ENDMACRO( OPTION_WITH_DEFAULT OPTION_NAME OPTION_STRING OPTION_DEFAULT )
+
+MACRO( CACHE_VAR_WITH_DEFAULT OPTION_NAME OPTION_DEFAULT OPTION_TYPE OPTION_STRING )
+	IF( NOT DEFINED ${OPTION_NAME} )
+		SET( ${OPTION_NAME} ${OPTION_DEFAULT} )
+	ENDIF( NOT DEFINED ${OPTION_NAME} )
+
+	SET( ${OPTION_NAME} "${OPTION_DEFAULT}" CACHE ${OPTION_TYPE} "${OPTION_STRING}" )
+ENDMACRO( CACHE_VAR_WITH_DEFAULT OPTION_NAME OPTION_DEFAULT OPTION_TYPE OPTION_STRING )
+
+# Set up library options
+# Generic library options
+CACHE_VAR_WITH_DEFAULT( ${UPPERCASE_LIBRARY_TARGET_NAME}_BUILD_TYPE "Release" STRING 
+	"Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel" )
+SET( CMAKE_BUILD_TYPE ${${UPPERCASE_LIBRARY_TARGET_NAME}_BUILD_TYPE} CACHE
+	INTERNAL "Internalise this variable and manipulate with
+	${UPPERCASE_LIBRARY_TARGET_NAME}_BUILD_TYPE" FORCE )
+CACHE_VAR_WITH_DEFAULT( ${UPPERCASE_LIBRARY_TARGET_NAME}_INSTALL_PREFIX
+	"${CMAKE_INSTALL_PREFIX}" PATH 
+	"Install path prefix, prepended onto install directories." )
+SET( CMAKE_INSTALL_PREFIX ${${UPPERCASE_LIBRARY_TARGET_NAME}_INSTALL_PREFIX}
+	CACHE INTERNAL "Internalise this variable and manipulate with
+	${UPPERCASE_LIBRARY_TARGET_NAME}_INSTALL_PREFIX" FORCE )
+OPTION_WITH_DEFAULT( ${UPPERCASE_LIBRARY_TARGET_NAME}_BUILD_STATIC_LIB "Build static ${LIBRARY_TARGET_NAME}" TRUE )
+OPTION_WITH_DEFAULT( ${UPPERCASE_LIBRARY_TARGET_NAME}_INSTALL_CONFIG "Install a config file for the library" FALSE )
+
+# Specific library options
+OPTION_WITH_DEFAULT( ${UPPERCASE_LIBRARY_TARGET_NAME}_BUILD_BZIP2 "Build bzip2${CMAKE_EXECUTABLE_SUFFIX} application" TRUE )
+OPTION_WITH_DEFAULT( ${UPPERCASE_LIBRARY_TARGET_NAME}_BUILD_RECOVER "Build bzip2recover${CMAKE_EXECUTABLE_SUFFIX} application" TRUE )
+
+IF( NOT ${UPPERCASE_LIBRARY_TARGET_NAME}_BUILD_BZIP2 )
+	SET( EXCLUDE_BZIP2 EXCLUDE_FROM_ALL )
+ENDIF( NOT ${UPPERCASE_LIBRARY_TARGET_NAME}_BUILD_BZIP2 )
+IF( NOT ${UPPERCASE_LIBRARY_TARGET_NAME}_BUILD_RECOVER )
+	SET( EXCLUDE_RECOVER EXCLUDE_FROM_ALL )
+ENDIF( NOT ${UPPERCASE_LIBRARY_TARGET_NAME}_BUILD_RECOVER )
+
+IF( MSVC )
+	ADD_DEFINITIONS( -D_CRT_SECURE_NO_WARNINGS )
+ENDIF( MSVC )
+IF( ${UPPERCASE_LIBRARY_TARGET_NAME}_BUILD_STATIC_LIB )
+	SET( LIBRARY_BUILD_TYPE STATIC )
+	SET( LIBRARY_INSTALL_TYPE ARCHIVE )
+ELSE( ${UPPERCASE_LIBRARY_TARGET_NAME}_BUILD_STATIC_LIB )
+	SET( LIBRARY_BUILD_TYPE SHARED )
+	SET( LIBRARY_INSTALL_TYPE LIBRARY )
+	IF( WIN32 )
+		SET( LIBRARY_INSTALL_TYPE RUNTIME )
+	ENDIF( WIN32 )
+ENDIF( ${UPPERCASE_LIBRARY_TARGET_NAME}_BUILD_STATIC_LIB )
+
+SET( LIBRARY_SRCS
+	blocksort.c
+	bzlib.c
+	compress.c
+	crctable.c
+	decompress.c
+	huffman.c
+	randtable.c )
+SET( LIBRARY_PUBLIC_HDRS
+	bzlib.h )
+SET( LIBRARY_PRIVATE_HDRS
+	bzlib_private.h )
+SET( BZIP2_SRCS
+	bzip2.c )
+SET( RECOVER_SRCS
+	bzip2recover.c )
+
+SET( CMAKE_DEBUG_POSTFIX "d" )
+SET( CMAKE_MFC_FLAG 0 )
+
+IF( WIN32 AND NOT ${UPPERCASE_LIBRARY_TARGET_NAME}_BUILD_STATIC_LIB )
+	SET( LIBRARY_WIN32_XTRAS 
+		libbz2.def )
+ENDIF( WIN32 AND NOT ${UPPERCASE_LIBRARY_TARGET_NAME}_BUILD_STATIC_LIB )
+
+ADD_LIBRARY( ${LIBRARY_TARGET_NAME} ${LIBRARY_BUILD_TYPE} ${LIBRARY_SRCS} ${LIBRARY_PUBLIC_HDRS} ${LIBRARY_PRIVATE_HDRS} ${LIBRARY_WIN32_XTRAS} )
+ADD_EXECUTABLE( ${BZIP2_TARGET_NAME} ${EXCLUDE_BZIP2} ${BZIP2_SRCS} )
+ADD_EXECUTABLE( ${RECOVER_TARGET_NAME} ${EXCLUDE_RECOVER} ${RECOVER_SRCS} )
+
+TARGET_LINK_LIBRARIES( ${BZIP2_TARGET_NAME} ${LIBRARY_TARGET_NAME} )
+TARGET_LINK_LIBRARIES( ${RECOVER_TARGET_NAME} ${LIBRARY_TARGET_NAME} )
+
+IF( WIN32 AND NOT ${UPPERCASE_LIBRARY_TARGET_NAME}_BUILD_STATIC_LIB )
+	SET_TARGET_PROPERTIES(${LIBRARY_TARGET_NAME} PROPERTIES IMPORT_SUFFIX _dll.lib)
+	INSTALL( TARGETS ${LIBRARY_TARGET_NAME} ARCHIVE
+		DESTINATION lib )
+ENDIF( WIN32 AND NOT ${UPPERCASE_LIBRARY_TARGET_NAME}_BUILD_STATIC_LIB )
+
+INSTALL( TARGETS ${LIBRARY_TARGET_NAME} EXPORT ${LIBRARY_TARGET_NAME}-targets ${LIBRARY_INSTALL_TYPE}
+	DESTINATION lib )
+INSTALL( FILES ${LIBRARY_PUBLIC_HDRS}
+	DESTINATION include )
+
+IF( ${UPPERCASE_LIBRARY_TARGET_NAME}_INSTALL_CONFIG )
+	SET( CONFIG_FILE_CONTENTS 
+		"\nGET_FILENAME_COMPONENT( SELF_DIR \"\${CMAKE_CURRENT_LIST_FILE}\" PATH )"
+		"\nINCLUDE( \${SELF_DIR}/bzip2-targets.cmake )"
+		"\nGET_FILENAME_COMPONENT( BZIP2_INCLUDE_DIRS \"\${SELF_DIR}/../../include\" ABSOLUTE )"
+		"\nSET( BZIP2_LIBRARIES ${LIBRARY_TARGET_NAME} )"
+		"\nSET( BZIP2_DEFINITIONS )"
+		"\nINCLUDE(CheckLibraryExists)"
+		"\nCHECK_LIBRARY_EXISTS(${BZIP2_LIBRARIES} BZ2_bzCompressInit "" BZIP2_NEED_PREFIX)"
+		"\nSET( BZIP2_FOUND TRUE )"
+		"\n" )
+	SET( CONFIG_FILE_NAME ${CMAKE_CURRENT_BINARY_DIR}/zlib-config.cmake )
+	FILE( WRITE ${CONFIG_FILE_NAME} ${CONFIG_FILE_CONTENTS} )
+
+	INSTALL( FILES ${CONFIG_FILE_NAME} DESTINATION lib/cmake )
+	INSTALL( EXPORT ${LIBRARY_TARGET_NAME}-targets DESTINATION lib/cmake )
+
+ENDIF( ${UPPERCASE_LIBRARY_TARGET_NAME}_INSTALL_CONFIG )
+
+
