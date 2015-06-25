@@ -37,7 +37,7 @@
 
 cmake_minimum_required(VERSION 3.0)
 
-project( BZIP2 LANGUAGES C CXX VERSION 1.0.6)
+project( BZIP2 LANGUAGES C VERSION 1.0.6)
 option( BZIP2_BUILD_RECOVER "Build bzip2recover${CMAKE_EXECUTABLE_SUFFIX} application" TRUE )
 option(BUILD_TESTS "${PROJECT_NAME} - Build tests" ON)
 
@@ -74,6 +74,12 @@ if( WIN32 AND BUILD_SHARED_LIBS)
 endif()
 
 add_library(bz2 ${LIBRARY_SRCS} ${LIBRARY_PUBLIC_HDRS} ${LIBRARY_PRIVATE_HDRS} ${LIBRARY_WIN32_XTRAS})
+# For intel we need to link against the irc support library
+# Dont know why it's not linked automatically as it's a compiler aux library
+# See https://software.intel.com/de-de/articles/unresolved-external-symbol-_intel_fast_memcpy
+if (CMAKE_C_COMPILER_ID STREQUAL Intel)
+    target_link_libraries(bz2 INTERFACE irc)
+endif()
 add_executable(bzip2 ${EXCLUDE_BZIP2} ${BZIP2_SRCS})
 add_executable(bzip2recover ${EXCLUDE_RECOVER} ${RECOVER_SRCS} )
 
