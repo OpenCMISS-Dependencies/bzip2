@@ -40,7 +40,6 @@ cmake_minimum_required(VERSION 3.0)
 project( BZIP2 LANGUAGES C CXX VERSION 1.0.6)
 option( BZIP2_BUILD_RECOVER "Build bzip2recover${CMAKE_EXECUTABLE_SUFFIX} application" TRUE )
 option(BUILD_TESTS "${PROJECT_NAME} - Build tests" ON)
-set(BUILD_TESTS ON)
 
 if( NOT BZIP2_BUILD_RECOVER )
 	set( EXCLUDE_RECOVER EXCLUDE_FROM_ALL )
