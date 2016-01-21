@@ -45,10 +45,6 @@ if( NOT BZIP2_BUILD_RECOVER )
 	set( EXCLUDE_RECOVER EXCLUDE_FROM_ALL )
 endif()
 
-if( MSVC )
-	add_definitions( -D_CRT_SECURE_NO_WARNINGS -DWIN32 -MD -Ox -D_FILE_OFFSET_BITS=64 -nologo )
-endif()
-
 set( LIBRARY_SRCS
 	blocksort.c
 	bzlib.c
@@ -74,6 +70,10 @@ if( WIN32 AND BUILD_SHARED_LIBS)
 endif()
 
 add_library(bz2 ${LIBRARY_SRCS} ${LIBRARY_PUBLIC_HDRS} ${LIBRARY_PRIVATE_HDRS} ${LIBRARY_WIN32_XTRAS})
+if(MSVC)
+    target_compile_definitions(bz2 PRIVATE _CRT_SECURE_NO_WARNINGS WIN32 _FILE_OFFSET_BITS=64)
+    target_compile_options(bz2 PRIVATE -MD -nologo)
+endif()
 # For intel we need to link against the irc support library
 # Dont know why it's not linked automatically as it's a compiler aux library
 # See https://software.intel.com/de-de/articles/unresolved-external-symbol-_intel_fast_memcpy
