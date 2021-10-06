@@ -74,6 +74,10 @@ if(MSVC)
     target_compile_definitions(bz2 PRIVATE _CRT_SECURE_NO_WARNINGS WIN32 _FILE_OFFSET_BITS=64)
     target_compile_options(bz2 PRIVATE -MD -nologo)
 endif()
+if (ENABLE_PIC)
+    set_target_properties(bz2 PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
+
 # For intel we need to link against the irc support library
 # Dont know why it's not linked automatically as it's a compiler aux library
 # See https://software.intel.com/de-de/articles/unresolved-external-symbol-_intel_fast_memcpy
